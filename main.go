@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -30,8 +29,9 @@ func main() {
 		port = "7540"
 	}
 
-	fmt.Printf("Сервер запущен на :%s\n", port)
-	if err := http.ListenAndServe(":"+port, nil); err != nil {
-		log.Fatal(err)
+	err := http.ListenAndServe(":"+port, nil)
+	if err != nil {
+   	 log.Printf("Server startup error: %v", err)
+    	return 
 	}
 }

@@ -7,11 +7,14 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"log"
 )
 
 const TimeLayout = "20060102"
 
 func NextDate(now time.Time, dstart string, repeat string) (string, error) {
+	now = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+
 	if repeat == "" {
 		return "", errors.New("repeat rule is empty")
 	}
@@ -55,6 +58,11 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 }
 
 func NextDateHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
+
 	nowStr := r.FormValue("now")
 	dateStr := r.FormValue("date")
 	repeat := r.FormValue("repeat")
@@ -78,5 +86,8 @@ func NextDateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte(next))
+	_, err = w.Write([]byte(next))
+    if err != nil {
+        log.Printf("error writing response: %v", err)
+    }
 }

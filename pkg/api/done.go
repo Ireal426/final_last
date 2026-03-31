@@ -1,6 +1,7 @@
 package api
 
 import (
+	"log"
 	"net/http"
 	"time"
 
@@ -8,15 +9,20 @@ import (
 )
 
 func TaskDoneHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		sendError(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	id := r.FormValue("id")
 	if id == "" {
-		sendError(w, "Не указан идентификатор")
+		sendError(w, "No identifier specified", http.StatusBadRequest)
 		return
 	}
 
 	task, err := db.GetTask(id)
 	if err != nil {
-		sendError(w, "Задача не найдена")
+		sendError(w, "Task not found", http.StatusNotFound)
 		return
 	}
 
@@ -26,17 +32,20 @@ func TaskDoneHandler(w http.ResponseWriter, r *http.Request) {
 		now := time.Now()
 		next, errNext := NextDate(now, task.Date, task.Repeat)
 		if errNext != nil {
-			sendError(w, errNext.Error())
+			sendError(w, errNext.Error(), http.StatusBadRequest)
 			return
 		}
 		err = db.UpdateTaskDate(id, next)
 	}
 
 	if err != nil {
-		sendError(w, err.Error())
+		sendError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.Write([]byte(`{}`))
+	_, err = w.Write([]byte(`{}`))
+	if err != nil {
+		log.Printf("error writing done response: %v", err)
+	}
 }
